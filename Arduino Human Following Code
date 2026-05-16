@@ -1,0 +1,132 @@
+#include <NewPing.h>
+
+// Ultrasonic
+#define ULTRASONIC_SENSOR_TRIG 8
+#define ULTRASONIC_SENSOR_ECHO 9
+
+#define MIN_DISTANCE 10
+#define MAX_DISTANCE 15   // slightly closer follow
+
+// IR Sensors
+#define IR_SENSOR_RIGHT 2
+#define IR_SENSOR_LEFT 7
+
+// Motor pins (⚠️ names are logical, not physical)
+int enableRightMotor = 3;   // actually LEFT wheel physically
+int rightMotorPin1 = 4;
+int rightMotorPin2 = 5;
+
+int enableLeftMotor = 11;   // actually RIGHT wheel physically
+int leftMotorPin1 = 12;
+int leftMotorPin2 = 13;
+
+// Calibration
+#define OFFSET 20   // boost for physical RIGHT wheel
+
+NewPing mySensor(ULTRASONIC_SENSOR_TRIG, ULTRASONIC_SENSOR_ECHO, 400);
+
+void setup()
+{
+  pinMode(enableRightMotor, OUTPUT);
+  pinMode(rightMotorPin1, OUTPUT);
+  pinMode(rightMotorPin2, OUTPUT);
+  
+  pinMode(enableLeftMotor, OUTPUT);
+  pinMode(leftMotorPin1, OUTPUT);
+  pinMode(leftMotorPin2, OUTPUT);
+
+  pinMode(IR_SENSOR_RIGHT, INPUT);
+  pinMode(IR_SENSOR_LEFT, INPUT);
+
+  rotateMotor(0,0);   
+}
+
+void loop()
+{
+  int distance = mySensor.ping_cm();
+
+  // 🔥 Fix ultrasonic glitch (very close / error)
+  if(distance == 0)
+  {
+    rotateMotor(0,0);
+    return;
+  }
+
+  int rightIR = digitalRead(IR_SENSOR_RIGHT);
+  int leftIR = digitalRead(IR_SENSOR_LEFT);
+
+  // 🔹 RIGHT turn → EXACTLY your logic
+  if (rightIR == LOW && leftIR == HIGH)
+  {
+      rotateMotor(0, 180);  
+  }
+
+  // 🔹 LEFT turn → EXACTLY your logic
+  else if (rightIR == HIGH && leftIR == LOW)
+  {
+      rotateMotor(180, 0);
+  }
+
+  // 🔹 TOO CLOSE → reverse
+  else if (distance < MIN_DISTANCE)
+  {
+      rotateMotor(-150, -(150 + OFFSET));
+  }
+
+  // 🔹 GOOD DISTANCE → stop
+  else if (distance >= MIN_DISTANCE && distance <= MAX_DISTANCE)
+  {
+      rotateMotor(0, 0);
+  }
+
+  // 🔹 TOO FAR → forward
+  else
+  {
+      int baseSpeed = 150;
+
+      int rightSpeed = baseSpeed;
+      int leftSpeed  = baseSpeed + OFFSET;
+
+      rotateMotor(rightSpeed, leftSpeed);
+  }
+}
+
+void rotateMotor(int rightMotorSpeed, int leftMotorSpeed)
+{
+  // Right motor
+  if (rightMotorSpeed < 0)
+  {
+    digitalWrite(rightMotorPin1,LOW);
+    digitalWrite(rightMotorPin2,HIGH);    
+  }
+  else if (rightMotorSpeed > 0)
+  {
+    digitalWrite(rightMotorPin1,HIGH);
+    digitalWrite(rightMotorPin2,LOW);      
+  }
+  else
+  {
+    digitalWrite(rightMotorPin1,LOW);
+    digitalWrite(rightMotorPin2,LOW);      
+  }
+
+  // Left motor
+  if (leftMotorSpeed < 0)
+  {
+    digitalWrite(leftMotorPin1,LOW);
+    digitalWrite(leftMotorPin2,HIGH);    
+  }
+  else if (leftMotorSpeed > 0)
+  {
+    digitalWrite(leftMotorPin1,HIGH);
+    digitalWrite(leftMotorPin2,LOW);      
+  }
+  else 
+  {
+    digitalWrite(leftMotorPin1,LOW);
+    digitalWrite(leftMotorPin2,LOW);      
+  }
+
+  analogWrite(enableRightMotor, abs(rightMotorSpeed));
+  analogWrite(enableLeftMotor, abs(leftMotorSpeed));    
+}
