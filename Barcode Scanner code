@@ -1,0 +1,470 @@
+import tkinter as tk
+from tkinter import ttk
+import qrcode
+from PIL import Image, ImageTk
+
+# =====================================================
+# PRODUCT DATABASE
+# =====================================================
+
+products = {
+    "123456": ("Milk", 50),
+    "234567": ("Bread", 30),
+    "345678": ("Eggs", 60),
+    "456789": ("Rice", 120),
+    "567890": ("Juice", 40),
+    "678901": ("Chocolate", 80),
+    "789012": ("Soap", 35)
+}
+
+# =====================================================
+# VARIABLES
+# =====================================================
+
+total_bill = 0
+
+# =====================================================
+# MAIN WINDOW
+# =====================================================
+
+root = tk.Tk()
+
+root.title("IoT Smart Shopping Trolley")
+
+# PERFECT SIZE FOR 7-INCH RASPBERRY PI DISPLAY
+root.geometry("800x480")
+
+root.configure(bg="#0f172a")
+
+# =====================================================
+# COLORS
+# =====================================================
+
+bg_color = "#0f172a"
+card_color = "#1e293b"
+
+neon_green = "#39ff14"
+neon_blue = "#00e5ff"
+neon_red = "#ff1744"
+
+# =====================================================
+# FRAMES
+# =====================================================
+
+scan_frame = tk.Frame(root, bg=bg_color)
+payment_frame = tk.Frame(root, bg=bg_color)
+
+scan_frame.pack(fill="both", expand=True)
+
+# =====================================================
+# TITLE
+# =====================================================
+
+title = tk.Label(
+    scan_frame,
+    text="SMART SHOPPING TROLLEY",
+    font=("Arial", 18, "bold"),
+    fg=neon_blue,
+    bg=bg_color
+)
+
+title.pack(pady=5)
+
+# =====================================================
+# TABLE FRAME
+# =====================================================
+
+table_frame = tk.Frame(
+    scan_frame,
+    bg=card_color,
+    bd=2,
+    relief="ridge"
+)
+
+table_frame.pack(pady=3)
+
+# =====================================================
+# TREEVIEW STYLE
+# =====================================================
+
+style = ttk.Style()
+
+style.theme_use("default")
+
+style.configure(
+    "Treeview",
+    background="#111827",
+    foreground="white",
+    rowheight=24,
+    fieldbackground="#111827",
+    font=("Arial", 9)
+)
+
+style.configure(
+    "Treeview.Heading",
+    font=("Arial", 10, "bold"),
+    background="#1f2937",
+    foreground="black"
+)
+
+# =====================================================
+# PRODUCT TABLE
+# =====================================================
+
+columns = ("Product", "Price")
+
+tree = ttk.Treeview(
+    table_frame,
+    columns=columns,
+    show="headings",
+    height=4
+)
+
+tree.heading("Product", text="Product Name")
+tree.heading("Price", text="Price (₹)")
+
+tree.column("Product", width=220)
+tree.column("Price", width=100)
+
+tree.pack()
+
+# =====================================================
+# TOTAL BILL
+# =====================================================
+
+total_label = tk.Label(
+    scan_frame,
+    text="Total Bill: ₹0",
+    font=("Arial", 15, "bold"),
+    fg=neon_green,
+    bg=bg_color
+)
+
+total_label.pack(pady=5)
+
+# =====================================================
+# BARCODE ENTRY
+# =====================================================
+
+barcode_entry = tk.Entry(
+    scan_frame,
+    font=("Arial", 14),
+    width=20,
+    bg="white",
+    fg="black",
+    insertbackground="black",
+    relief="solid",
+    bd=2,
+    justify="center"
+)
+
+barcode_entry.pack(ipady=5, pady=5)
+
+barcode_entry.focus_force()
+
+# =====================================================
+# PROCESS BARCODE
+# =====================================================
+
+def process_scan(event):
+
+    global total_bill
+
+    code = barcode_entry.get().strip()
+
+    barcode_entry.delete(0, tk.END)
+
+    if code in products:
+
+        product_name, product_price = products[code]
+
+        tree.insert(
+            "",
+            tk.END,
+            values=(product_name, f"₹{product_price}")
+        )
+
+        total_bill += product_price
+
+        total_label.config(
+            text=f"Total Bill: ₹{total_bill}"
+        )
+
+barcode_entry.bind("<Return>", process_scan)
+
+# =====================================================
+# REMOVE PRODUCT
+# =====================================================
+
+def remove_product():
+
+    global total_bill
+
+    selected_item = tree.selection()
+
+    if selected_item:
+
+        item = tree.item(selected_item)
+
+        price_text = item['values'][1]
+
+        price = int(str(price_text).replace("₹", ""))
+
+        total_bill -= price
+
+        if total_bill < 0:
+            total_bill = 0
+
+        total_label.config(
+            text=f"Total Bill: ₹{total_bill}"
+        )
+
+        tree.delete(selected_item)
+
+# =====================================================
+# CLEAR CART
+# =====================================================
+
+def clear_cart():
+
+    global total_bill
+
+    for item in tree.get_children():
+        tree.delete(item)
+
+    total_bill = 0
+
+    total_label.config(
+        text="Total Bill: ₹0"
+    )
+
+# =====================================================
+# BUTTON FRAME
+# =====================================================
+
+button_frame = tk.Frame(scan_frame, bg=bg_color)
+
+button_frame.pack(pady=8)
+
+# =====================================================
+# BUTTON STYLE
+# =====================================================
+
+button_style = {
+    "font": ("Arial", 10, "bold"),
+    "width": 9,
+    "bd": 0
+}
+
+# =====================================================
+# NEXT BUTTON
+# =====================================================
+
+def open_payment():
+
+    payment_total_label.config(
+        text=f"Total Bill: ₹{total_bill}"
+    )
+
+    generate_qr(total_bill)
+
+    scan_frame.pack_forget()
+
+    payment_frame.pack(fill="both", expand=True)
+
+next_btn = tk.Button(
+    button_frame,
+    text="NEXT",
+    bg=neon_green,
+    fg="black",
+    command=open_payment,
+    **button_style
+)
+
+next_btn.grid(row=0, column=0, padx=5)
+
+# =====================================================
+# REMOVE BUTTON
+# =====================================================
+
+remove_btn = tk.Button(
+    button_frame,
+    text="REMOVE",
+    bg="#ff9800",
+    fg="black",
+    command=remove_product,
+    **button_style
+)
+
+remove_btn.grid(row=0, column=1, padx=5)
+
+# =====================================================
+# CLEAR BUTTON
+# =====================================================
+
+clear_btn = tk.Button(
+    button_frame,
+    text="CLEAR",
+    bg=neon_red,
+    fg="white",
+    command=clear_cart,
+    **button_style
+)
+
+clear_btn.grid(row=0, column=2, padx=5)
+
+# =====================================================
+# PAYMENT PAGE
+# =====================================================
+
+payment_title = tk.Label(
+    payment_frame,
+    text="PAYMENT",
+    font=("Arial", 18, "bold"),
+    fg=neon_blue,
+    bg=bg_color
+)
+
+payment_title.pack(pady=3)
+
+# =====================================================
+# PAYMENT TOTAL
+# =====================================================
+
+payment_total_label = tk.Label(
+    payment_frame,
+    text="",
+    font=("Arial", 16, "bold"),
+    fg=neon_green,
+    bg=bg_color
+)
+
+payment_total_label.pack(pady=3)
+
+# =====================================================
+# QR LABEL
+# =====================================================
+
+qr_label = tk.Label(
+    payment_frame,
+    bg=bg_color
+)
+
+qr_label.pack(pady=3)
+
+# =====================================================
+# GENERATE QR
+# =====================================================
+
+def generate_qr(amount):
+
+    upi_link = f"upi://pay?pa=saidarshan55m@okaxis&pn=SmartCart&am={amount}&cu=INR"
+
+    qr = qrcode.make(upi_link)
+
+    qr = qr.resize((130, 130))
+
+    qr_photo = ImageTk.PhotoImage(qr)
+
+    qr_label.config(image=qr_photo)
+
+    qr_label.image = qr_photo
+
+# =====================================================
+# PAYMENT TEXT
+# =====================================================
+
+upi_text = tk.Label(
+    payment_frame,
+    text="Scan QR using any UPI App",
+    font=("Arial", 10),
+    fg="white",
+    bg=bg_color
+)
+
+upi_text.pack(pady=2)
+
+# =====================================================
+# SUCCESS MESSAGE
+# =====================================================
+
+success_label = tk.Label(
+    payment_frame,
+    text="",
+    font=("Arial", 11, "bold"),
+    fg=neon_green,
+    bg=bg_color
+)
+
+success_label.pack(pady=3)
+
+# =====================================================
+# PAYMENT RECEIVED
+# =====================================================
+
+def payment_received():
+
+    success_label.config(
+        text="PAYMENT RECEIVED SUCCESSFULLY ✅"
+    )
+
+# =====================================================
+# BUTTON CONTAINER
+# =====================================================
+
+button_container = tk.Frame(
+    payment_frame,
+    bg=bg_color
+)
+
+button_container.pack(fill="x", pady=5)
+
+# =====================================================
+# PAID BUTTON
+# =====================================================
+
+payment_btn = tk.Button(
+    button_container,
+    text="PAID",
+    bg=neon_green,
+    fg="black",
+    font=("Arial", 10, "bold"),
+    width=8,
+    height=1,
+    bd=0,
+    command=payment_received
+)
+
+payment_btn.pack(side="left", padx=40)
+
+# =====================================================
+# BACK BUTTON
+# =====================================================
+
+def back_to_scan():
+
+    payment_frame.pack_forget()
+
+    scan_frame.pack(fill="both", expand=True)
+
+    barcode_entry.focus_force()
+
+back_btn = tk.Button(
+    button_container,
+    text="BACK",
+    bg=neon_red,
+    fg="white",
+    font=("Arial", 10, "bold"),
+    width=8,
+    height=1,
+    bd=0,
+    command=back_to_scan
+)
+
+back_btn.pack(side="right", padx=40)
+
+# =====================================================
+# RUN
+# =====================================================
+
+root.mainloop()
