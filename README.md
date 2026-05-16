@@ -1,8 +1,5 @@
 # Iot-based-Autonomous-smart-shopping-trolley
 
-For your **Smart Shopping Trolley project**, Chapter 7 should look like this:
-
-# CHAPTER 7: SYSTEM ARCHITECTURE
 
 # 7.1 Introduction
 
