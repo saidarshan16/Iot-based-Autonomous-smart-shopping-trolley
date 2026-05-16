@@ -245,6 +245,38 @@ Customer completes payment
 
 Payment confirmation displayed
 
+7.6 Screenshots / Demo Images
+
+Insert screenshots:
+
+Screenshot 1:
+<img width="457" height="211" alt="image" src="https://github.com/user-attachments/assets/285e3db2-b7fe-41d8-885f-db0179319475" />
+
+Explain:
+Displays products and total bill.
+
+Screenshot 2:
+
+<img width="452" height="176" alt="image" src="https://github.com/user-attachments/assets/0d7069d9-9a92-4d93-ab53-954c6131d407" />
+
+Explain:
+Allows digital payment.
+
+Screenshot 3:
+
+<img width="514" height="664" alt="image" src="https://github.com/user-attachments/assets/c3294e48-8f0c-443e-b420-9d8cbc9c7537" />
+
+
+Explain:
+Shows sensor-based trolley movement.
+
+Screenshot 4:
+
+<img width="1537" height="1023" alt="image" src="https://github.com/user-attachments/assets/939e3e59-46fd-4aaf-8e8d-447c570be9e8" />
+
+
+Explain:
+Complete hardware integration.
 ---
 
 
